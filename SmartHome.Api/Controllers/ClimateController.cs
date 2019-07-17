@@ -26,38 +26,56 @@ namespace MikaelStrid.SmartHome.Api.Controllers
         [Route("temperature-humidity")]
         public async Task<ActionResult> PostTemperatureAndHumidity([FromBody] TemperatureAndHumidityApiModel model)
         {
-            await Task.CompletedTask;
             //var client = _clientFactory.CreateClient();
-            //var task1 = client.PostAsJsonAsync(
-            //    "http://docker.for.win.localhost:9200/climate/temperature_humidity",
-            //    new
-            //    {
-            //        Timestamp = DateTimeOffset.Now,
-            //        model.SensorId,
-            //        model.Temperature,
-            //        model.Humidity
-            //    });
-            //var task2 = client.PostAsJsonAsync(
-            //    "https://smarthomereceiversappservice.azurewebsites.net/api/TemperatureHumidity",
-            //    new
-            //    {
-            //        model.SensorId,
-            //        model.Temperature,
-            //        model.Humidity
-            //    });
-            //await Task.WhenAll(task1, task2);
+            //await SaveToLocalElasticsearch(model, client);
+            //await SendToAzureApi(model, client);
+            //SaveToGraphite(model, _statsPublisher);
 
-            _statsPublisher.Gauge(model.Temperature, "climate.thirdfloor.temperature");
+            await Task.CompletedTask;
             Console.WriteLine(JsonConvert.SerializeObject(model));
-
             return Ok();
         }
+        
+
+        #region Unused save methods
+
+        private static async Task SendToAzureApi(TemperatureAndHumidityApiModel model, HttpClient client)
+        {
+            await client.PostAsJsonAsync(
+                "https://smarthomereceiversappservice.azurewebsites.net/api/TemperatureHumidity",
+                new
+                {
+                    model.SensorId,
+                    model.Temperature,
+                    model.Humidity
+                });
+        }
+
+        private static async Task SaveToLocalElasticsearch(TemperatureAndHumidityApiModel model, HttpClient client)
+        {
+            await client.PostAsJsonAsync(
+                "http://docker.for.win.localhost:9200/climate/temperature_humidity",
+                new
+                {
+                    Timestamp = DateTimeOffset.Now,
+                    model.SensorId,
+                    model.Temperature,
+                    model.Humidity
+                });
+        }
+
+        private static void SaveToGraphite(TemperatureAndHumidityApiModel model, IStatsDPublisher statsDPublisher)
+        {
+            statsDPublisher.Gauge(model.Temperature, "climate.thirdfloor.temperature");
+        }
+
+        #endregion
     }
 
     public class TemperatureAndHumidityApiModel
-    {
-        public string SensorId { get; set; }
-        public float Temperature { get; set; }
-        public float Humidity { get; set; }
-    }
+{
+    public string SensorId { get; set; }
+    public float Temperature { get; set; }
+    public float Humidity { get; set; }
+}
 }
