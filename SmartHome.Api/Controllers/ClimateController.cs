@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using JustEat.StatsD;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace MikaelStrid.SmartHome.Api.Controllers
@@ -11,35 +14,43 @@ namespace MikaelStrid.SmartHome.Api.Controllers
     public class ClimateController : ControllerBase
     {
         private readonly IHttpClientFactory _clientFactory;
+        private readonly IStatsDPublisher _statsPublisher;
 
-        public ClimateController(IHttpClientFactory clientFactory)
+        public ClimateController(IHttpClientFactory clientFactory, IStatsDPublisher statsPublisher)
         {
             _clientFactory = clientFactory;
+            _statsPublisher = statsPublisher;
         }
 
         [HttpPost]
         [Route("temperature-humidity")]
-        public async Task PostTemperatureAndHumidity([FromBody] TemperatureAndHumidityApiModel model)
+        public async Task<ActionResult> PostTemperatureAndHumidity([FromBody] TemperatureAndHumidityApiModel model)
         {
-            var client = _clientFactory.CreateClient();
-            var task1 = client.PostAsJsonAsync(
-                "http://docker.for.win.localhost:9200/climate/temperature_humidity",
-                new
-                {
-                    Timestamp = DateTimeOffset.Now,
-                    model.SensorId,
-                    model.Temperature,
-                    model.Humidity
-                });
-            var task2 = client.PostAsJsonAsync(
-                "https://smarthomereceiversappservice.azurewebsites.net/api/TemperatureHumidity",
-                new
-                {
-                    model.SensorId,
-                    model.Temperature,
-                    model.Humidity
-                });
-            await Task.WhenAll(task1, task2);
+            await Task.CompletedTask;
+            //var client = _clientFactory.CreateClient();
+            //var task1 = client.PostAsJsonAsync(
+            //    "http://docker.for.win.localhost:9200/climate/temperature_humidity",
+            //    new
+            //    {
+            //        Timestamp = DateTimeOffset.Now,
+            //        model.SensorId,
+            //        model.Temperature,
+            //        model.Humidity
+            //    });
+            //var task2 = client.PostAsJsonAsync(
+            //    "https://smarthomereceiversappservice.azurewebsites.net/api/TemperatureHumidity",
+            //    new
+            //    {
+            //        model.SensorId,
+            //        model.Temperature,
+            //        model.Humidity
+            //    });
+            //await Task.WhenAll(task1, task2);
+
+            _statsPublisher.Gauge(model.Temperature, "climate.thirdfloor.temperature");
+            Console.WriteLine(JsonConvert.SerializeObject(model));
+
+            return Ok();
         }
     }
 

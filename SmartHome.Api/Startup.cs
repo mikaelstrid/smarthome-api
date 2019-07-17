@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using JustEat.StatsD;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +21,20 @@ namespace MikaelStrid.SmartHome.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpClient();
+            //services.AddStatsD(
+            //    (provider) =>
+            //    {
+            //        //var options = provider.GetRequiredService<MyOptions>().StatsD;
+
+            //        return new StatsDConfiguration()
+            //        {
+            //            Host = "127.0.0.1",
+            //            Port = 8125,
+            //            Prefix = "smarthome",
+            //            //OnError = ex => LogError(ex)
+            //        };
+            //    });
+            services.AddStatsD("host.docker.internal", "smarthome");
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
